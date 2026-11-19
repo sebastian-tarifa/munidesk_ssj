@@ -6,6 +6,25 @@ user = st.session_state.usuario_logueado
 lista_tecnicos_disponibles = obtener_lista_tecnicos()
 df_tickets, df_historial_all, _ = cargar_tablas()
 
+# Filtrar por el usuario que inició sesión
+nombre_usuario = user["nombre_completo"].strip().lower()
+
+if user["rol"] == "Administrador":
+    ver_todos = st.toggle("👁️ Vista Administrador: ver tickets de todos los técnicos", value=False)
+    if not ver_todos:
+        df_tickets = df_tickets[
+            df_tickets["tecnico_asignado"].str.strip().str.lower() == nombre_usuario
+        ].reset_index(drop=True)
+elif user["rol"] == "Tecnico IT":
+    df_tickets = df_tickets[
+        df_tickets["tecnico_asignado"].str.strip().str.lower() == nombre_usuario
+    ].reset_index(drop=True)
+else:
+    # Si es Operador (agente solicitante), muestra los que él generó
+    df_tickets = df_tickets[
+        df_tickets["solicitante"].str.strip().str.lower() == nombre_usuario
+    ].reset_index(drop=True)
+
 m1, m2, m3, m4 = st.columns(4)
 m1.metric("Total Tickets", len(df_tickets))
 m2.metric("Abiertos", len(df_tickets[df_tickets["estado"] == "Abierto"]))
